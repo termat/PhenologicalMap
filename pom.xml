@@ -46,15 +46,53 @@
   </dependencies>
   <build>
     <plugins>
-	  <plugin>
-		<groupId>org.codehaus.mojo</groupId>
-		<artifactId>exec-maven-plugin</artifactId>
-		<version>1.6.0</version>
-		<configuration>
-		<mainClass>net.termat.spark.Main</mainClass>
-		</configuration>
-	  </plugin>
+	    <plugin>
+		    <groupId>org.codehaus.mojo</groupId>
+		    <artifactId>exec-maven-plugin</artifactId>
+		    <version>1.6.0</version>
+		    <configuration>
+		      <mainClass>net.termat.spark.Main</mainClass>
+		    </configuration>
+	    </plugin>
+ 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.1.1</version>
+				<configuration>
+				<finalName>test</finalName>
+				<descriptorRefs>
+ 				<!-- 依存するリソースをすべてjarに同梱する -->
+				<descriptorRef>jar-with-dependencies</descriptorRef>
+				</descriptorRefs>
+				<archive>
+					<manifest>
+						<mainClass>net.termat.spark.Main</mainClass>
+					</manifest>
+				</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<!-- idタグは任意の文字列であれば何でもよい -->
+						<id>make-assembly</id>
+						<phase>package</phase>
+ 						<goals>
+ 							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.heroku.sdk</groupId>
+				<artifactId>heroku-maven-plugin</artifactId>
+				<version>2.0.7</version>
+				<configuration>
+					<jdkVersion>1.8</jdkVersion>
+					<appName>PhenologicalMap</appName>
+					<processTypes>
+						<web>java -jar ./target/test-jar-with-dependencies.jar</web>
+					</processTypes>
+				</configuration>
+			</plugin>
     </plugins>
   </build>
-
 </project>
