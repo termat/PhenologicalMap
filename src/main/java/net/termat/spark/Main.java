@@ -18,6 +18,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		Spark.staticFileLocation("/public");
+		port(getHerokuAssignedPort());
 		Gson gson=new Gson();
 		String path=System.getProperty("user.dir");
 		PhenologicalDB db=new PhenologicalDB();
@@ -74,5 +75,13 @@ public class Main {
     		ret.put(k[0], k[1]);
     	}
     	return ret;
+	}
+	
+	static int getHerokuAssignedPort() {
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        if (processBuilder.environment().get("PORT") != null) {
+            return Integer.parseInt(processBuilder.environment().get("PORT"));
+        }
+        return 4567;
     }
 }
