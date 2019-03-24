@@ -25,10 +25,9 @@ public class Main {
         });
 		Spark.staticFileLocation("/public");
 		Gson gson=new Gson();
-		String path=System.getProperty("user.dir");
 		PhenologicalDB db=new PhenologicalDB();
 		try{
-			db.connectDB(path+"/PhenologicalDB.db");
+			db.connectDB("PhenologicalDB.db");
 		}catch(Exception e){}
 
         get("/", (request, response) -> {

@@ -27,7 +27,6 @@ public class PhenologicalDB {
 
 	public void connectDB(String name) throws SQLException{
 		try{
-			if(!name.endsWith(".db"))name=name+".db";
 			Class.forName("org.sqlite.JDBC");
 			connectionSource = new JdbcConnectionSource("jdbc:sqlite:"+name);
 			phDao= DaoManager.createDao(connectionSource, PhenologicalData.class);
