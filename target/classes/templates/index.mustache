@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=1920,user-scalable=yes">
+		<meta name="description" content="">
+		<meta name="author" content="">
+		<title>生物季節可視化サイト</title>
+		<!-- jquery -->
+		<script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+		<!-- Bootstrap-->
+		<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+		<!-- Openlayer-->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.css" />
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.5/ol.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.js"></script>
+		<!-- Chart.js-->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+		<!-- app.js  -->
+		<link rel="stylesheet" href="css/app.css" />
+		<script src="js/app.js" ></script>
+		<script src="js/delaunay.js" ></script>
+	</head>
+	<body>
+		<nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark" id="mainNav">
+			<div class="container">
+				<a class="navbar-brand js-scroll-trigger" href="#page-top">生物季節の可視化サイト</a>
+				<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+					<ul class="navbar-nav mr-auto">		
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" role="button" id="spaceies" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">さくら満開</a>
+							<div class="dropdown-menu" aria-labelledby="spaceies">
+								<a class="dropdown-item" href="#" onclick="SpaceiesSelect('さくら満開')">さくら満開</a>
+								<a class="dropdown-item" href="#" onclick="SpaceiesSelect('さくら開花')">さくら開花</a>
+								<a class="dropdown-item" href="#" onclick="SpaceiesSelect('つばめ初見')">つばめ初見</a>
+								<a class="dropdown-item" href="#" onclick="SpaceiesSelect('うぐいす初鳴')">うぐいす初鳴</a>
+								<a class="dropdown-item" href="#" onclick="SpaceiesSelect('かえで紅葉')">かえで紅葉</a>
+							</div>
+						</li>
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" role="button" id="datatype" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">観測値</a>
+							<div class="dropdown-menu" aria-labelledby="datatype">
+								<a class="dropdown-item" href="#" onclick="DataTypeSelect('観測値')">観測値</a>
+								<a class="dropdown-item" href="#" onclick="DataTypeSelect('5年移動平均')">5年移動平均</a>
+							</div>
+						</li>
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" id="data_year" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">経年比較</a>
+							<div class="dropdown-menu scrollable-menu" aria-labelledby="data_year" role="menu">
+								<a class="dropdown-item" href="#" onclick="changeData('経年比較')">経年比較</a>
+								<div id="data_year_list"></div>
+							</div>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link js-scroll-trigger" href="#" onclick="$('#infoDialog').modal({'show':true})">本サイトについて</a>
+						</li>
+					</ul>
+
+				</div>
+		</nav>
+		<div id="map" class="map"></div>
+		<div id="dialog" class="modal fade modeless" tabindex="-1" role="dialog" style="left:100px;top:260px;width:500px;height:160px;">
+			<div class="modal-dialog" role="document" style="margin:0px;">
+				<div class="modal-content">
+					<div class="modal-header" style="padding:4px;">
+						<div class="row">
+							<div class="col-sm" style="width:120px;">
+								<p id="dateStr" style="margin:0px;"></p>
+							</div>
+							<div class="col-sm">
+								<div class="form-check" style="width:100px;">
+									<input class="form-check-input" type="checkbox" value="" id="mesh_check">
+										<label class="form-check-label" for="defaultCheck1">メッシュ</label>
+								</div>
+							</div>
+							<div class="col-sm">
+								<a href="#" class="btn btn-primary btn-sm active" role="button" onclick="controller.startAnime();"><i class="fas fa-atlas"></i>再生</a>
+							</div>
+							<div class="col-sm">
+								<div class="dropdown">
+  									<a class="btn btn-secondary btn-sm dropdown-toggle" href="#" style="font-size:x-snall;" role="button" id="speed" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    									再生速度：普通
+  									</a>
+  									<div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+    									<a class="dropdown-item" href="#" onclick="$('#speed').text('再生速度：速い')">再生速度：速い</a>
+    									<a class="dropdown-item" href="#" onclick="$('#speed').text('再生速度：普通')">再生速度：普通</a>
+    									<a class="dropdown-item" href="#" onclick="$('#speed').text('再生速度：遅い')">再生速度：遅い</a>
+  									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="modal-body" style="padding:4px;">
+						<div class="slidecontainer">
+							<input type="range" min="1" max="100" value="0" class="slider" id="dataRange" style="width;90%;">
+						</div>
+					</div>
+					<div class="modal-footer">
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="modal fade" id="outputDialog" tabindex="-1" role="dialog" aria-labelledby="output" aria-hidden="true" data-backdrop="static">
+			<div class="modal-dialog" role="document" style="overflow-y: initial !important">
+				<div class="modal-content">
+					 <div class="modal-header">
+						<h5 class="modal-title" id="outputTitle"></h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body" style="overflow-y: auto;">
+						<div id="outputBody"></div>
+						<canvas id="chart"></canvas>
+					</div>
+					<div class="modal-footer" id="outputFooter">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="modal fade" id="infoDialog" tabindex="-1" role="dialog" aria-labelledby="output" aria-hidden="true" data-backdrop="static">
+			<div class="modal-dialog" role="document" style="overflow-y: initial !important">
+				<div class="modal-content">
+					 <div class="modal-header">
+						<h5 class="modal-title" id="outputTitle">このサイトについて</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body" style="overflow-y: auto;">
+						<h5 style="color:#444444;text-align:left;margin-left:32px;font-weight: bold;">■このサイトについて</h5>
+						<p>	本サイトは、情報可視化の実験サイトであり、気象庁が公表している<a href="https://www.data.jma.go.jp/sakura/data/" target="_blank">生物季節観測情報</a>を環境学習向けに可視化したものです。</p>
+						<p>関連サイト：<a href="https://www.termat.net/plan" target="_blank">地球温暖化対策を計画してみよう</a></p>
+						<h5 style="color:#444444;text-align:left;margin-left:32px;font-weight: bold;">■免責事項</h5>
+						<ul style="text-align:left;font-size:small;">
+							<li>明示、暗黙を問わず本サイトの内容に関してはいかなる保証も適用しません。</li>
+							<li>本サイトの利用により、何らかのトラブルや損失・損害等が生じた場合、本サイトの関係者は損害、損失に対していかなる場合も一切の責任を負いません。</li>
+							<li>コンテンツの全ての情報について、内容の合法性・正確性・安全性等、あらゆる点において保証しません。</li>
+							<li>リンクをしている外部サイトについて、一切、保証しません。</li>
+							<li>事前の予告無く、コンテンツの提供を中止する可能性があります。</li>
+						</ul>
+						<div class="col-md-12 text-center" style='font-size:x-small;'>
+							<p>Copyright (C) 2018 <a href="https://twitter.com/t_mat" target="_blank">t.matsuoka</a> All Rights Reserved.</p>
+						</div>
+					<div class="modal-footer" id="outputFooter" style="padding:4px;">
+						<button type="button button-sm" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
