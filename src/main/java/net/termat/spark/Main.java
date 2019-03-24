@@ -2,9 +2,10 @@ package net.termat.spark;
 
 import static spark.Spark.get;
 
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.google.gson.Gson;
 
@@ -17,8 +18,12 @@ import spark.template.mustache.MustacheTemplateEngine;
 public class Main {
 
 	public static void main(String[] args) {
+		Optional<String> optionalPort = Optional.ofNullable(System.getenv("PORT"));
+        optionalPort.ifPresent(p -> {
+            int port = Integer.parseInt(p);
+            Spark.port(port);
+        });
 		Spark.staticFileLocation("/public");
-		port(getHerokuAssignedPort());
 		Gson gson=new Gson();
 		String path=System.getProperty("user.dir");
 		PhenologicalDB db=new PhenologicalDB();
@@ -76,12 +81,4 @@ public class Main {
     	}
     	return ret;
 	}
-	
-	static int getHerokuAssignedPort() {
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        if (processBuilder.environment().get("PORT") != null) {
-            return Integer.parseInt(processBuilder.environment().get("PORT"));
-        }
-        return 4567;
-    }
 }
